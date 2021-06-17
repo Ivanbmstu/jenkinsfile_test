@@ -78,10 +78,10 @@ pipeline {
       steps {
         scripts {
           sh 'ls -lh'
-          readContent = readFile "build.gradle"
+          def readContent = readFile "build.gradle"
           writeFile file: "build.gradle", text: "$readContent\n$buildAppend"
 
-          readSettings = readFile "settings.gradle"
+          def readSettings = readFile "settings.gradle"
           writeFile file: "settings.gradle", text: "$readSettings\nenableFeaturePreview(\"ONE_LOCKFILE_PER_PROJECT\")"
         }
       }
