@@ -1,8 +1,51 @@
 //version 0.0.1
 def gradleTasks = ''
 def UUID_DIR = UUID.randomUUID().toString()
+def buildAppend = """
+allprojects {
+    dependencyLocking {
+        lockAllConfigurations()
+    }
+    task resolveAndLockAll {
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks
+        }
+        doLast {
+            configurations.findAll {
+                // Add any custom filtering on the configurations to be resolved
+                it.canBeResolved
+            }.each { it.resolve() }
+        }
+    }
+}
+allprojects {
+    task copyLocks(type: Copy) {
+        from 'gradle.lockfile'
+        rename {
+            "\${project.name}.lockfile"
+        }
+        into "\$rootDir/locks"
+    }
 
-String deployRepo, repoSlug, projKey, branch, version
+
+}
+task envReport() {
+    doLast {
+        def config = project.getBuildscript().getConfigurations().getByName("classpath")
+
+        def configuration = config.getResolvedConfiguration()
+        configuration.getResolvedArtifacts().each {
+            file("\$rootDir/locks/plugins.lockfile") << (it.moduleVersion.toString() + '\\n')
+        }
+    }
+}
+
+task archiveLocks(type: Zip) {
+    archiveFileName = "locks.zip"
+    destinationDirectory = file("\$rootDir")
+    from "\$rootDir/locks"
+}"""
+
 
 pipeline {
   agent {
@@ -35,50 +78,6 @@ pipeline {
       steps {
         scripts {
           sh 'ls -lh'
-          buildAppend = """
-            allprojects {
-                dependencyLocking {
-                    lockAllConfigurations()
-                }
-                task resolveAndLockAll {
-                    doFirst {
-                        assert gradle.startParameter.writeDependencyLocks
-                    }
-                    doLast {
-                        configurations.findAll {
-                            // Add any custom filtering on the configurations to be resolved
-                            it.canBeResolved
-                        }.each { it.resolve() }
-                    }
-                }
-            }
-            allprojects {
-                task copyLocks(type: Copy) {
-                    from 'gradle.lockfile'
-                    rename {
-                        "\${project.name}.lockfile"
-                    }
-                    into "\$rootDir/locks"
-                }
-
-
-            }
-            task envReport() {
-                doLast {
-                    def config = project.getBuildscript().getConfigurations().getByName("classpath")
-
-                    def configuration = config.getResolvedConfiguration()
-                    configuration.getResolvedArtifacts().each {
-                        file("\$rootDir/locks/plugins.lockfile") << (it.moduleVersion.toString() + '\\n')
-                    }
-                }
-            }
-
-            task archiveLocks(type: Zip) {
-                archiveFileName = "locks.zip"
-                destinationDirectory = file("\$rootDir")
-                from "\$rootDir/locks"
-            }"""
           readContent = readFile "build.gradle"
           writeFile file: "build.gradle", text: "$readContent\n$buildAppend"
 
