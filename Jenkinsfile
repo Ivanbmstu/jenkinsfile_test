@@ -35,7 +35,7 @@ pipeline {
       steps {
         scripts {
           sh 'ls -lh'
-          def buildAppend = """
+          buildAppend = """
             allprojects {
                 dependencyLocking {
                     lockAllConfigurations()
@@ -79,10 +79,10 @@ pipeline {
                 destinationDirectory = file("\$rootDir")
                 from "\$rootDir/locks"
             }"""
-          def readContent = readFile "build.gradle"
+          readContent = readFile "build.gradle"
           writeFile file: "build.gradle", text: "$readContent\n$buildAppend"
 
-          def readSettings = readFile "settings.gradle"
+          readSettings = readFile "settings.gradle"
           writeFile file: "settings.gradle", text: "$readSettings\nenableFeaturePreview(\"ONE_LOCKFILE_PER_PROJECT\")"
         }
       }
