@@ -87,7 +87,7 @@ pipeline {
         }
       }
     }
-    stage('Prepare Build') {
+    stage('Create Locks') {
       steps {
         scripts {
           sh './gradlew resolveAndLockAll  --write-locks'
