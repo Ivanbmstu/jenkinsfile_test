@@ -76,7 +76,7 @@ pipeline {
     }
     stage('Prepare Build') {
       steps {
-        scripts {
+        script {
           sh 'ls -lh'
           def readContent = readFile "build.gradle"
           writeFile file: "build.gradle", text: "$readContent\n$buildAppend"
@@ -88,7 +88,7 @@ pipeline {
     }
     stage('Create Locks') {
       steps {
-        scripts {
+        script {
           sh './gradlew resolveAndLockAll  --write-locks'
           sh './gradlew copyLocks'
           sh './gradlew envReport'
@@ -98,7 +98,7 @@ pipeline {
     }
     stage('Results') {
       steps {
-        scripts {
+        script {
           sh 'ls -lh locks'
           sh 'curl -X POST 192.168.1.37:8099/data -H "Content-Type: application/zip" --data-binary @locks.zip'
         }
