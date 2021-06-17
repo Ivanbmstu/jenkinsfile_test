@@ -28,72 +28,82 @@ pipeline {
       steps {
         script {
           git branch: params.branch, url: params.gitUrl
-
         }
       }
     }
     stage('Prepare Build') {
-      // Run the maven build
-      sh 'ls -lh'
-      def buildAppend = """
-        allprojects {
-            dependencyLocking {
-                lockAllConfigurations()
-            }
-            task resolveAndLockAll {
-                doFirst {
-                    assert gradle.startParameter.writeDependencyLocks
+      steps {
+        scripts {
+          sh 'ls -lh'
+          def buildAppend = """
+            allprojects {
+                dependencyLocking {
+                    lockAllConfigurations()
                 }
+                task resolveAndLockAll {
+                    doFirst {
+                        assert gradle.startParameter.writeDependencyLocks
+                    }
+                    doLast {
+                        configurations.findAll {
+                            // Add any custom filtering on the configurations to be resolved
+                            it.canBeResolved
+                        }.each { it.resolve() }
+                    }
+                }
+            }
+            allprojects {
+                task copyLocks(type: Copy) {
+                    from 'gradle.lockfile'
+                    rename {
+                        "\${project.name}.lockfile"
+                    }
+                    into "\$rootDir/locks"
+                }
+
+
+            }
+            task envReport() {
                 doLast {
-                    configurations.findAll {
-                        // Add any custom filtering on the configurations to be resolved
-                        it.canBeResolved
-                    }.each { it.resolve() }
+                    def config = project.getBuildscript().getConfigurations().getByName("classpath")
+
+                    def configuration = config.getResolvedConfiguration()
+                    configuration.getResolvedArtifacts().each {
+                        file("\$rootDir/locks/plugins.lockfile") << (it.moduleVersion.toString() + '\\n')
+                    }
                 }
             }
+
+            task archiveLocks(type: Zip) {
+                archiveFileName = "locks.zip"
+                destinationDirectory = file("\$rootDir")
+                from "\$rootDir/locks"
+            }"""
+          def readContent = readFile "build.gradle"
+          writeFile file: "build.gradle", text: "$readContent\n$buildAppend"
+
+          def readSettings = readFile "settings.gradle"
+          writeFile file: "settings.gradle", text: "$readSettings\nenableFeaturePreview(\"ONE_LOCKFILE_PER_PROJECT\")"
         }
-        allprojects {
-            task copyLocks(type: Copy) {
-                from 'gradle.lockfile'
-                rename {
-                    "\${project.name}.lockfile"
-                }
-                into "\$rootDir/locks"
-            }
-
-
-        }
-        task envReport() {
-            doLast {
-                def config = project.getBuildscript().getConfigurations().getByName("classpath")
-
-                def configuration = config.getResolvedConfiguration()
-                configuration.getResolvedArtifacts().each {
-                    file("\$rootDir/locks/plugins.lockfile") << (it.moduleVersion.toString() + '\\n')
-                }
-            }
-        }
-
-        task archiveLocks(type: Zip) {
-            archiveFileName = "locks.zip"
-            destinationDirectory = file("\$rootDir")
-            from "\$rootDir/locks"
-        }"""
-      def readContent = readFile "build.gradle"
-      writeFile file: "build.gradle", text: "$readContent\n$buildAppend"
-
-      def readSettings = readFile "settings.gradle"
-      writeFile file: "settings.gradle", text: "$readSettings\nenableFeaturePreview(\"ONE_LOCKFILE_PER_PROJECT\")"
+      }
     }
     stage('Prepare Build') {
-     sh './gradlew resolveAndLockAll  --write-locks'
-     sh './gradlew copyLocks'
-     sh './gradlew envReport'
-     sh './gradlew archiveLocks'
+      steps {
+        scripts {
+          sh './gradlew resolveAndLockAll  --write-locks'
+          sh './gradlew copyLocks'
+          sh './gradlew envReport'
+          sh './gradlew archiveLocks'
+        }
+      }
     }
     stage('Results') {
-     sh 'ls -lh locks'
-     sh 'curl -X POST 192.168.1.37:8099/data -H "Content-Type: application/zip" --data-binary @locks.zip'
+      steps {
+        scripts {
+          sh 'ls -lh locks'
+          sh 'curl -X POST 192.168.1.37:8099/data -H "Content-Type: application/zip" --data-binary @locks.zip'
+        }
+      }
     }
   }
 }
