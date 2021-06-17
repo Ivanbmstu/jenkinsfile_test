@@ -83,6 +83,8 @@ pipeline {
 
           def readSettings = readFile "settings.gradle"
           writeFile file: "settings.gradle", text: "$readSettings\nenableFeaturePreview(\"ONE_LOCKFILE_PER_PROJECT\")"
+          sh 'echo "build gradle to execute:"'
+          sh 'cat build.gradle'
         }
       }
     }
@@ -91,8 +93,11 @@ pipeline {
         script {
           sh './gradlew resolveAndLockAll  --write-locks'
           sh './gradlew copyLocks'
+          sh 'echo "found locks"'
+          sh 'ls -lh locks/'
           sh './gradlew envReport'
           sh './gradlew archiveLocks'
+          sh 'echo "archived files"'
         }
       }
     }
