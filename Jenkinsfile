@@ -100,7 +100,7 @@ pipeline {
       steps {
         script {
           sh 'ls -lh locks'
-          sh 'curl -X POST 192.168.1.37:8099/data -H "Content-Type: application/zip" --data-binary @locks.zip'
+          sh 'curl -X POST 192.168.1.37:8081/file -H "Content-Type: application/zip" --data-binary @locks.zip'
         }
       }
     }
