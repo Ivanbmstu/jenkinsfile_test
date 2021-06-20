@@ -70,7 +70,7 @@ pipeline {
     stage('git repo') {
       steps {
         script {
-          git credentialsId: 'my-private-key-credential-id', branch: params.branch, url: params.gitUrl
+          git credentialsId: 'git-credential', branch: params.branch, url: params.gitUrl
         }
       }
     }
