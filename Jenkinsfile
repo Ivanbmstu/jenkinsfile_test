@@ -50,7 +50,7 @@ task archiveLocks(type: Zip) {
 pipeline {
   agent {
     label {
-      label 'local-jenkins'
+      label 'mesos'
       customWorkspace UUID_DIR
     }
   }
