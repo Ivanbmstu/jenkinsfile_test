@@ -105,7 +105,7 @@ pipeline {
       steps {
         script {
           sh 'ls -lh locks'
-          sh 'curl -X POST 192.168.1.37:8081/file -H "Content-Type: multipart/form-data" -F file=@locks.zip'
+          // sh 'curl -X POST 192.168.1.37:8081/file -H "Content-Type: multipart/form-data" -F file=@locks.zip'
         }
       }
     }
