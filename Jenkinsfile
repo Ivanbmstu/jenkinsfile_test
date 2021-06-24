@@ -50,13 +50,14 @@ task archiveLocks(type: Zip) {
 pipeline {
   agent {
     label {
-      label params.label
+      label "${params.label}"
       customWorkspace UUID_DIR
     }
   }
   parameters {
     string(name: 'gitUrl', description: 'test', defaultValue: 'master')
     string(name: 'branch', description: 'test', defaultValue: 'master')
+    string(name: 'label', description: 'test', defaultValue: 'master')
   }
 
   options {
