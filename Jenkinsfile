@@ -2,9 +2,6 @@
 def gradleTasks = ''
 def UUID_DIR = UUID.randomUUID().toString()
 def buildAppend = """
-
-
-
 allprojects {
     dependencyLocking {
         lockAllConfigurations()
