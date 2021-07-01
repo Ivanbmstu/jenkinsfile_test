@@ -13,6 +13,8 @@ pipeline {
   }
   parameters {
     string(name: 'testb', description: 'FROM MASTER 1', defaultValue: 'master')
+    string(name: 'gitUrl', description: 'test', defaultValue: 'master')
+    string(name: 'branch', description: 'test', defaultValue: 'master')
   }
 
   options {
@@ -23,6 +25,13 @@ pipeline {
   }
 
   stages {
+    stage('git repo') {
+      steps {
+        script {
+          git branch: params.branch, url: params.gitUrl
+        }
+      }
+    }
     stage('define build method') {
       steps {
         script {
