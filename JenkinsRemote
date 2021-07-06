@@ -35,7 +35,7 @@ pipeline {
     stage('define build method') {
       steps {
         script {
-          sh "echo 'hello ${params.testb}'"
+          sh "echo 'hello ${params.testb} remote jenkins'"
           deployRepo  = ''
           gradleTasks = 'build'
 
